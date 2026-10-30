@@ -51,13 +51,45 @@
 <footer>Evie School Helper · Keep it simple. Get it done. ✓</footer>
 <script>
 const KEY='evie-school-wins-v1';
+
+let celebrationAudio;
+function celebrate(){
+  // Keep all audio inside the completion click so mobile browsers allow playback.
+  try{
+    if('speechSynthesis' in window && 'SpeechSynthesisUtterance' in window){
+      const yay=new SpeechSynthesisUtterance('Yay!');
+      yay.lang='en-US';yay.pitch=1.5;yay.rate=1.05;yay.volume=0.85;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(yay);
+    }
+  }catch(e){/* Completion still works if speech is unavailable. */}
+  try{
+    const Audio=window.AudioContext||window.webkitAudioContext;
+    if(!Audio)return;
+    celebrationAudio=celebrationAudio||new Audio();
+    const ctx=celebrationAudio;
+    if(ctx.state==='suspended')ctx.resume().catch(()=>{});
+    [523.25,659.25,783.99].forEach((frequency,i)=>{
+      const oscillator=ctx.createOscillator(),gain=ctx.createGain();
+      const start=ctx.currentTime+i*0.09;
+      oscillator.type='sine';oscillator.frequency.value=frequency;
+      gain.gain.setValueAtTime(0,start);
+      gain.gain.linearRampToValueAtTime(0.08,start+0.015);
+      gain.gain.exponentialRampToValueAtTime(0.001,start+0.25);
+      oscillator.connect(gain);gain.connect(ctx.destination);
+      oscillator.start(start);oscillator.stop(start+0.26);
+      oscillator.onended=()=>{oscillator.disconnect();gain.disconnect()};
+    });
+  }catch(e){/* Completion still works if audio is unavailable. */}
+}
+
 function toggleWin(){document.getElementById('winbox').classList.toggle('open');if(document.getElementById('winbox').classList.contains('open'))document.getElementById('winText').focus()}
 function load(){return JSON.parse(localStorage.getItem(KEY)||'[]')}
 function store(x){localStorage.setItem(KEY,JSON.stringify(x))}
 function addWin(){let t=document.getElementById('winText').value.trim(),d=document.getElementById('winDate').value;if(!t)return;let a=load();a.unshift({id:Date.now(),text:t,date:d,done:false});store(a);document.getElementById('winText').value='';document.getElementById('winDate').value='';toggleWin();render()}
-function toggle(id){let a=load(),x=a.find(v=>v.id===id);if(x)x.done=!x.done;store(a);render()}
+function toggle(id){let a=load(),x=a.find(v=>v.id===id);if(x)x.done=!x.done;store(a);render();if(x&&x.done)celebrate()}
 function render(){let a=load(),el=document.getElementById('wins');document.getElementById('empty').style.display=a.length?'none':'block';el.innerHTML=a.map(x=>`<div class="win ${x.done?'completed':''}"><div><strong>${esc(x.text)}</strong><small>${x.date?new Date(x.date+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'}):'Personal win'}</small></div><button class="check" onclick="toggle(${x.id})">${x.done?'Nice! ✓':'Done?'}</button></div>`).join('')}
 function esc(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function finishSchool(b){document.getElementById('schoolCard').classList.toggle('completed');b.textContent=document.getElementById('schoolCard').classList.contains('completed')?'Nice! ✓':'✓ Mark done'}
+function finishSchool(b){document.getElementById('schoolCard').classList.toggle('completed');b.textContent=document.getElementById('schoolCard').classList.contains('completed')?'Nice! ✓':'✓ Mark done';if(document.getElementById('schoolCard').classList.contains('completed'))celebrate()}
 render();
 </script></main></body></html>
