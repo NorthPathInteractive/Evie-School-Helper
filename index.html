@@ -6,23 +6,23 @@
 <div id="winbox" class="winbox"><h3>Add a Win ✨</h3><div class="fields"><input id="winText" maxlength="80" placeholder="What’s the win?"><input id="winDate" type="date"><button class="save" onclick="addWin()">Add</button></div></div>
 <div class="tabs"><button class="tab active">Today</button><button class="tab">Coming Up</button><button class="tab">Done</button></div>
 <div class="section-title">Today</div>
-<article class="card" id="schoolCard"><div class="cardhead"><span class="class">🍳 Hospitality &amp; Tourism · P2</span><span class="due">DUE TODAY</span></div><h2>Alton Brown: The Blade’s The Thing</h2><p class="action"><b>Watch the episode</b> + answer the questions in order.</p><div class="bottom"><span class="teacher">Catherine Dorval · Oct 27</span><button class="donebtn" onclick="finishSchool(this)">✓ Mark done</button></div><details class="details"><summary>Details</summary><p>Video worksheet. Answer each question while watching; the questions follow the episode in order.</p></details></article>
+<article class="card" id="schoolCard" data-assignment="hospitality-blades-thing"><div class="cardhead"><span class="class">🍳 Hospitality &amp; Tourism · P2</span><span class="due">DUE TODAY</span></div><h2>Alton Brown: The Blade’s The Thing</h2><p class="action"><b>Watch the episode</b> + answer the questions in order.</p><div class="bottom"><span class="teacher">Catherine Dorval · Oct 27</span><button class="donebtn" onclick="finishSchool(this)">✓ Mark done</button></div><details class="details"><summary>Details</summary><p>Video worksheet. Answer each question while watching; the questions follow the episode in order.</p></details></article>
 
 <div class="section-title">BDI3C · Teacher follow-up</div>
-<p class="action" style="margin:0 3px 14px;font-size:14px">From Ms. Bolton’s October 28, 2026 email. Completion status has not been confirmed.</p>
-<article class="card" style="margin-bottom:14px">
+<p class="action" style="margin:0 3px 14px;font-size:14px">From Ms. Bolton’s October 28, 2026 email. Use Mark done as you finish each assignment.</p>
+<article class="card" data-assignment="bdi3c-1-2-alaina-podmorow" style="margin-bottom:14px">
 <div class="cardhead"><span class="class">BDI3C · 1.2</span><span class="due">DUE DATE NOT PROVIDED</span></div>
 <h2>Alaina Podmorow</h2><p class="action"><b>Rewrite in your own words</b> and resubmit the assignment.</p>
 <details class="details"><summary>Details</summary><p>Explicit requirement: resubmit in your own words. The email does not include the full prompt, rubric, formatting, or submission instructions. Review the original assignment and feedback.</p></details>
 <div class="bottom"><span class="teacher">Elizabeth Bolton · Oct 28, 2026</span></div>
 </article>
-<article class="card" style="margin-bottom:14px">
+<article class="card" data-assignment="bdi3c-1-2-what-does-it-take" style="margin-bottom:14px">
 <div class="cardhead"><span class="class">BDI3C · 1.2</span><span class="due">DUE DATE NOT PROVIDED</span></div>
 <h2>What does it take</h2><p class="action"><b>Rewrite the paragraph in your own words</b> and resubmit.</p>
 <details class="details"><summary>Details</summary><p>Explicit requirement: resubmit the paragraph in your own words. The email does not include the full prompt, rubric, formatting, or submission instructions. Review the original assignment and feedback.</p></details>
 <div class="bottom"><span class="teacher">Elizabeth Bolton · Oct 28, 2026</span></div>
 </article>
-<article class="card" style="margin-bottom:14px">
+<article class="card" data-assignment="bdi3c-1-5-profile-skills" style="margin-bottom:14px">
 <div class="cardhead"><span class="class">BDI3C · 1.5</span><span class="due">DUE DATE NOT PROVIDED</span></div>
 <h2>Profile and Skills unit summative</h2><p class="action"><b>Read the instructions and submit all four items.</b></p>
 <ul style="padding-left:22px;line-height:1.7">
@@ -90,6 +90,41 @@ function addWin(){let t=document.getElementById('winText').value.trim(),d=docume
 function toggle(id){let a=load(),x=a.find(v=>v.id===id);if(x)x.done=!x.done;store(a);render();if(x&&x.done)celebrate()}
 function render(){let a=load(),el=document.getElementById('wins');document.getElementById('empty').style.display=a.length?'none':'block';el.innerHTML=a.map(x=>`<div class="win ${x.done?'completed':''}"><div><strong>${esc(x.text)}</strong><small>${x.date?new Date(x.date+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'}):'Personal win'}</small></div><button class="check" onclick="toggle(${x.id})">${x.done?'Nice! ✓':'Done?'}</button></div>`).join('')}
 function esc(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function finishSchool(b){document.getElementById('schoolCard').classList.toggle('completed');b.textContent=document.getElementById('schoolCard').classList.contains('completed')?'Nice! ✓':'✓ Mark done';if(document.getElementById('schoolCard').classList.contains('completed'))celebrate()}
+const SCHOOL_KEY='evie-school-assignments-v1';
+function schoolProgress(){
+  try{const value=JSON.parse(localStorage.getItem(SCHOOL_KEY)||'{}');return value&&typeof value==='object'&&!Array.isArray(value)?value:{}}catch(e){return {}}
+}
+let assignmentProgress=schoolProgress();
+function renderAssignment(card){
+  const done=assignmentProgress[card.dataset.assignment]===true;
+  card.classList.toggle('completed',done);
+  const button=card.querySelector('.donebtn');
+  button.textContent=done?'✓ Completed · Undo':'✓ Mark done';
+  button.setAttribute('aria-pressed',String(done));
+}
+function finishSchool(button){
+  const card=button.closest('article[data-assignment]');
+  if(!card)return;
+  const id=card.dataset.assignment;
+  assignmentProgress[id]=assignmentProgress[id]!==true;
+  try{localStorage.setItem(SCHOOL_KEY,JSON.stringify(assignmentProgress))}catch(e){}
+  renderAssignment(card);
+  if(assignmentProgress[id])celebrate();
+}
+function setupAssignments(){
+  document.querySelectorAll('article.card').forEach(card=>{
+    // Give future assignment cards the same completion control, with or without a due date.
+    if(!card.dataset.assignment)card.dataset.assignment='assignment-'+card.querySelector('h2').textContent.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-');
+    let button=card.querySelector('.donebtn');
+    if(!button){
+      let bottom=card.querySelector('.bottom');
+      if(!bottom){bottom=document.createElement('div');bottom.className='bottom';card.appendChild(bottom)}
+      button=document.createElement('button');button.className='donebtn';bottom.appendChild(button);
+    }
+    button.type='button';button.onclick=()=>finishSchool(button);
+    renderAssignment(card);
+  });
+}
+setupAssignments();
 render();
 </script></main></body></html>
