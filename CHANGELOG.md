@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-02
+
+- Added the Final Anthropology Project – Physical Anthropology Inquiry to Needs Attention after a Google Classroom reminder confirmed it is due November 2, 2026.
+- Added the confirmed submission checklist: links to all digital materials, APA references page for research sources, and a personal reflection for group work only.
+- Preserved all existing assignment identifiers and browser-saved completion behavior.
+
 ## 2026-10-31
 
 - Added BDI3C Unit 2 discussion work to Needs Attention after Ms. Bolton confirmed the previously blocked discussion pages should now be accessible. Individual discussion titles and due dates remain unknown.
